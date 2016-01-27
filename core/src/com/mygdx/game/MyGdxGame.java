@@ -6,8 +6,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Vector2;
 import com.mygdx.game.sprites.Starships;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -110,6 +112,38 @@ public class MyGdxGame extends ApplicationAdapter {
 					friendlyPlayers.put(id, new Starships(friendlyShip));
 				} catch(JSONException e) {
 					Gdx.app.log("SocketIO", "Error getting new Player ID");
+				}
+			}
+
+		}).on("playerDisconnected", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject data = (JSONObject) args[0];
+				try {
+					String id = data.getString("id");
+					friendlyPlayers.remove(id);
+				} catch (JSONException e) {
+					Gdx.app.log("SocketIO", "Error getting new Player ID");
+				}
+			}
+
+		}).on("getPlayers", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONArray objects = (JSONArray) args[0];
+				try {
+					for(int i = 0; i < objects.length(); i++) {
+						Starships coopPlayer = new Starships(friendlyShip);
+						Vector2 position = new Vector2();
+						position.x = ((Double) objects.getJSONObject(i).getDouble("x")).floatValue();
+						position.y = ((Double) objects.getJSONObject(i).getDouble("y")).floatValue();
+						coopPlayer.setPosition(position.x, position.y);
+
+						friendlyPlayers.put(objects.getJSONObject(i).getString("id"), coopPlayer);
+					}
+
+				} catch(JSONException e) {
+
 				}
 			}
 
